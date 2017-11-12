@@ -56,25 +56,29 @@ class myStreamer(tweepy.StreamListener):
     ''' StreamListener class for tweepy. Print statuses to stdout'''
     #########################################################
 
-    def __init__(self):
+    def __init__(self,printmessage=True):
         super(myStreamer, self).__init__()
+        self.printmessage = printmessage
     #########################################################
 
     def on_status(self, status):
-        print('\n{aname:20s} ({aid}):'.format(
-            aname=status.author.screen_name, aid=status.author.id))
-        print(status.text)
-        # note that coordinates are formatted as [long,lat]
-        # coordinates.coordinates are long,lat
-        # geo.coordinates are lat long
-        coords = None
-        if status.coordinates:
-            # print(status.coordinates[u'coordinates'])
-            lon = status.coordinates[u'coordinates'][0]
-            lat = status.coordinates[u'coordinates'][1]
-            coords = [lat, lon]
-        if coords:
-            print('\033[31mcoordinates: \033[0m{lat},{lon}'.format(lat=coords[0], lon=coords[1]))
+        # kafka stuff
+
+        if self.printmessage:
+            print('\n{aname:20s} ({aid}):'.format(
+                aname=status.author.screen_name, aid=status.author.id))
+            print(status.text)
+            # note that coordinates are formatted as [long,lat]
+            # coordinates.coordinates are long,lat
+            # geo.coordinates are lat long
+            coords = None
+            if status.coordinates:
+                # print(status.coordinates[u'coordinates'])
+                lon = status.coordinates[u'coordinates'][0]
+                lat = status.coordinates[u'coordinates'][1]
+                coords = [lat, lon]
+            if coords:
+                print('\033[31mcoordinates: \033[0m{lat},{lon}'.format(lat=coords[0], lon=coords[1]))
     #########################################################
 
     def on_error(self, status):

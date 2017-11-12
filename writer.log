@@ -1,0 +1,7 @@
+2017-11-11 22:03:24.589461 writing tweets - 
+
+2017-11-11 22:03:24.589491 reading from myCredentials.txt
+2017-11-11 22:03:24.589567 setting up DB
+2017-11-11 22:03:24.589869 there are 1 tables named rawTweets in the database
+2017-11-11 22:03:24.589882 rawtweets exists
+2017-11-11 22:03:24.589888 dropping rawTweets
