@@ -46,29 +46,79 @@ class myStreamer(tweepy.StreamListener):
     ''' StreamListener class for tweepy. Print statuses to stdout'''
     #########################################################
 
-    def __init__(self,printmessage=True):
+    def __init__(self, printmessage=True):
         super(myStreamer, self).__init__()
         self.printmessage = printmessage
+        self._dbcon = None
+        self._dbcur = None
+    #########################################################
+
+    @property
+    def dbcon(self):
+        ''' connection to sqlite database for raw tweet data'''
+        return self._dbcon
+    @dbcon.setter
+    def dbcon(self, conn):
+        self._dbcon = conn
+    @dbcon.deleter
+    def dbcon(self):
+        del self._dbcon
+
     #########################################################
 
     def on_status(self, status):
-        # kafka stuff
+        ''' carried out when a status is recieved through stream '''
+        # get a db cursor, if we don't already have one
+        if not self._dbcur:
+            self._dbcur = self.dbcon.cursor()
+
+        # tweet id
+        tweet_id_str = status.id_str
+
+        # author info
+        author_name = status.user['screen_name']
+        author_id_str = status.user['id_str']
+
+        # datetime (in utc)
+        datetime_utc = status.created_at
+
+        # coordinates
+        lon = None
+        lat = None
+        if status.coordinates:
+            # print(status.coordinates[u'coordinates'])
+            lon = status.coordinates[u'coordinates'][0]
+            lat = status.coordinates[u'coordinates'][1]
+
+        # write to db
+        # this could hammer the disk.
+        # Might be better to store tweets in a list
+        # write the list if it exceeds X tweets or Y seconds since last write
+        tweetinfo = (tweet_id_str, author_name, author_id_str, status.text, lat, lon, datetime_utc)
+
+        self._dbcur.execute(
+            'INSERT INTO rawTweets('
+            'tweet_id_str, '
+            'author, '
+            'author_id_str, '
+            'status, '
+            'geo_latt, '
+            'geo_long, '
+            'datetime_utc) '
+            ' VALUES (?,?,?,?,?,?,?)',
+            tweetinfo
+            )
+        writeLog('recorded tweet {tid} created at {cat}'.format(tid=tweet_id_str, cat=datetime_utc))
 
         if self.printmessage:
-            print('\n{aname:20s} ({aid}):'.format(
-                aname=status.author.screen_name, aid=status.author.id))
+            print('\n{aname:20s} :'.format(
+                aname=author_name))
             print(status.text)
-            # note that coordinates are formatted as [long,lat]
             # coordinates.coordinates are long,lat
-            # geo.coordinates are lat long
-            coords = None
+            # geo.coordinates are lat, long
+
             if status.coordinates:
-                # print(status.coordinates[u'coordinates'])
-                lon = status.coordinates[u'coordinates'][0]
-                lat = status.coordinates[u'coordinates'][1]
-                coords = [lat, lon]
-            if coords:
-                print('\033[31mcoordinates: \033[0m{lat},{lon}'.format(lat=coords[0], lon=coords[1]))
+                print('\033[31mcoordinates: \033[0m{lat},{lon}'.format(lat=lat, lon=lon))
     #########################################################
 
     def on_error(self, status):
@@ -102,8 +152,8 @@ def GetUserIDs(api, names):
 
 
 
-def setupDB(dbFile,dropRaw=True):
-    ''' 
+def setupDB(dbFile, dropRaw=True):
+    '''
     set up the database for storing tweet info
     create db if file does not exist
     create table rawTweets if it does not exist
@@ -112,28 +162,39 @@ def setupDB(dbFile,dropRaw=True):
     conn = sqlite3.connect(dbFile)
     cur = conn.cursor()
 
+    if dropRaw:
+        cur.execute('DROP TABLE IF EXISTS rawTweets')
+
     # check if table exists
     cur.execute("SELECT count(*) from sqlite_master WHERE type = 'table' AND name = 'rawTweets'")
     count = cur.fetchone()[0]
     writeLog('there are {row} tables named rawTweets in the database'.format(row=count))
 
-    if count >0:
+
+    if count > 0:
         writeLog('rawtweets exists')
-        if dropRaw:
-            writeLog('dropping rawTweets')
-            # drop and recreate rawTweets
     else:
         writeLog('creating rawtweets table')
+        cur.execute(
+            'CREATE TABLE rawTweets('
+            'id INTEGER PRIMARY KEY, '
+            'tweet_id_str TEXT, '
+            'author TEXT, '
+            'author_id_str TEXT, '
+            'status TEXT, '
+            'geo_latt REAL, '
+            'geo_long REAL, '
+            'datetime_utc TEXT'
+            ');'
+            )
 
+    # close cursor
+    cur.close()
 
-    conn.close()
-
-
-
-    # SELECT name FROM sqlite_master WHERE type='table' AND name='table_name';
+    return conn
 #############################################################
 
-def writeTweets(credFile,DBfile,logfile):
+def writeTweets(credFile, DBfile, logfile):
     ''' main function. Do stuff.'''
 
     # setup log file
@@ -145,40 +206,38 @@ def writeTweets(credFile,DBfile,logfile):
     cd = GetCredentials(credFile)
 
     # setup db
-    setupDB(DBfile)
+    conn = setupDB(DBfile)
 
+    # authenticate
+    print('authenticating')
+    auth = tweepy.OAuthHandler(cd['Consumer_Key'], cd['Consumer_Secret'])
+    auth.set_access_token(cd['Access_Token'], cd['Access_Secret'])
 
-
-
-    # # authenticate
-    # print('authenticating')
-    # auth = tweepy.OAuthHandler(cd['Consumer_Key'], cd['Consumer_Secret'])
-    # auth.set_access_token(cd['Access_Token'], cd['Access_Secret'])
-
-    # # handle on tweepy api object
-    # tweeper = tweepy.API(auth)
-
-    # # look up ids
-    # ids = GetUserIDs(tweeper, FOLLOW)
-    # print('followed ids:')
-    # for theid in ids:
-    #     print(theid)
+    # handle on tweepy api object
+    tweeper = tweepy.API(auth)
 
     # # initialise the stream
-    # print('initialising twitter stream')
-    # theStreamListener = myStreamer()
-    # stream = tweepy.Stream(auth=tweeper.auth, listener=theStreamListener)
+    print('initialising twitter stream')
+    theStreamListener = myStreamer()
+
+    # pass db connection to stream listener
+    theStreamListener.dbcon = conn
+
+
+    stream = tweepy.Stream(auth=tweeper.auth, listener=theStreamListener)
 
     # print('streaming')
     # stream.filter(locations=LOCATIONBOX, follow=ids, track=TRACK, async=True)
 
 
-    # # stream until users enters [qQ].*
-    # q = ''
-    # while not re.match(r'^[qQ]', q):
-    #     q = raw_input('enter "q" to exit > ')
-    #     # print('received input: {q}'.format(q=q))
-    #     stream.disconnect()
+    # stream until users enters [qQ].*
+    q = ''
+    while not re.match(r'^[qQ]', q):
+        q = raw_input('enter "q" to exit > ')
+        # print('received input: {q}'.format(q=q))
+        stream.disconnect()
+        theStreamListener.dbcon.close()
+
 
 # if __name__ == '__main__':
 #     main()

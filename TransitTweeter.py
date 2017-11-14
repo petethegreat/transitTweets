@@ -32,12 +32,13 @@ if __name__ == '__main__':
     # print('writing tweet data to {dbf}'.format(dbf=DBfile))
 
     try:
-        with open(args.writerLog,'w') as writerLog:
+        with open(args.writerLog,'w',encoding='utf8') as writerLog:
             print('opening {wl} for tweetWriter logging\n'.format(wl=args.writerLog))
             ttweeter.writeTweets(credFile,DBfile,writerLog)
     except IOError: 
         print('Error: could not open {wf} for writing\n')
         sys.exit()
+    print('done writing tweets, exiting')
 
 
 
