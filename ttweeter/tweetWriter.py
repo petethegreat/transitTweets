@@ -19,12 +19,20 @@ FOLLOW = [
     'bradTTC',
     ]
 
-# a big box containing the torontoish area
+# # a big box containing the torontoish area
+# LOCATIONBOX = [
+#     -79.63,
+#     43.61,
+#     -79.297,
+#     43.76
+#     ]
+    
+# Wellington
 LOCATIONBOX = [
-    -79.63,
-    43.61,
-    -79.297,
-    43.76
+    174.75,
+    -41.356,
+    174.95,
+    -41.2
     ]
 
 # terms to track
@@ -46,11 +54,12 @@ class myStreamer(tweepy.StreamListener):
     ''' StreamListener class for tweepy. Print statuses to stdout'''
     #########################################################
 
-    def __init__(self, printmessage=True):
+    def __init__(self, dbFile,printmessage=True):
         super(myStreamer, self).__init__()
         self.printmessage = printmessage
         self._dbcon = None
         self._dbcur = None
+        self._dbfile = dbFile
     #########################################################
 
     @property
@@ -64,20 +73,34 @@ class myStreamer(tweepy.StreamListener):
     def dbcon(self):
         del self._dbcon
 
+    @property
+    def dbfile(self):
+        '''database filename'''
+        return self._dbfile
+
+    @dbfile.setter
+    def dbfile(self,file):
+        self._dbfile = file
+
+    @dbfile.deleter
+    def dbfile(self):
+        del self._dbfile
+
     #########################################################
 
     def on_status(self, status):
         ''' carried out when a status is recieved through stream '''
         # get a db cursor, if we don't already have one
         if not self._dbcur:
+            self._dbcon  = sqlite3.connect(self._dbfile)
             self._dbcur = self.dbcon.cursor()
 
         # tweet id
         tweet_id_str = status.id_str
 
         # author info
-        author_name = status.user['screen_name']
-        author_id_str = status.user['id_str']
+        author_name = status.author.screen_name
+        author_id_str = status.author.id_str
 
         # datetime (in utc)
         datetime_utc = status.created_at
@@ -124,6 +147,9 @@ class myStreamer(tweepy.StreamListener):
     def on_error(self, status):
         ''' print status on error'''
         print(status)
+    def disconnect(self):
+        self._dbcon.disconnect()
+        super(myStreamer, self).disconnect()
 #############################################################
 
 def GetCredentials(credFile):
@@ -152,7 +178,7 @@ def GetUserIDs(api, names):
 
 
 
-def setupDB(dbFile, dropRaw=True):
+def setupDB(dbFile, dropRaw=False):
     '''
     set up the database for storing tweet info
     create db if file does not exist
@@ -191,7 +217,7 @@ def setupDB(dbFile, dropRaw=True):
     # close cursor
     cur.close()
 
-    return conn
+    conn.close()
 #############################################################
 
 def writeTweets(credFile, DBfile, logfile):
@@ -206,7 +232,7 @@ def writeTweets(credFile, DBfile, logfile):
     cd = GetCredentials(credFile)
 
     # setup db
-    conn = setupDB(DBfile)
+    setupDB(DBfile)
 
     # authenticate
     print('authenticating')
@@ -218,16 +244,17 @@ def writeTweets(credFile, DBfile, logfile):
 
     # # initialise the stream
     print('initialising twitter stream')
-    theStreamListener = myStreamer()
+    theStreamListener = myStreamer(DBfile)
 
     # pass db connection to stream listener
-    theStreamListener.dbcon = conn
+    # theStreamListener.dbcon = conn
 
 
     stream = tweepy.Stream(auth=tweeper.auth, listener=theStreamListener)
 
     # print('streaming')
     # stream.filter(locations=LOCATIONBOX, follow=ids, track=TRACK, async=True)
+    stream.filter(locations=LOCATIONBOX, async=True)
 
 
     # stream until users enters [qQ].*

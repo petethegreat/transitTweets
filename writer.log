@@ -1,6 +1,0 @@
-2017-11-14 21:41:29.868848 writing tweets - 
-
-2017-11-14 21:41:29.868947 reading from myCredentials.txt
-2017-11-14 21:41:29.869008 setting up DB
-2017-11-14 21:41:29.917063 there are 0 tables named rawTweets in the database
-2017-11-14 21:41:29.917151 creating rawtweets table

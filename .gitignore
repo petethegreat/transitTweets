@@ -2,3 +2,4 @@ myCredentials.txt
 tweetdb.sqlite
 ttweeter/__pycache__
 *.pyc
+writer.log
