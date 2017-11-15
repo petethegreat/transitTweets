@@ -8,6 +8,7 @@ from __future__ import print_function
 import argparse
 import ttweeter
 import sys
+import codecs
 
 if __name__ == '__main__':
 
@@ -32,7 +33,7 @@ if __name__ == '__main__':
     # print('writing tweet data to {dbf}'.format(dbf=DBfile))
 
     try:
-        with open(args.writerLog,'w',encoding='utf8') as writerLog:
+        with codecs.open(args.writerLog,'w',encoding='utf8') as writerLog:
             print('opening {wl} for tweetWriter logging\n'.format(wl=args.writerLog))
             ttweeter.writeTweets(credFile,DBfile,writerLog)
     except IOError: 

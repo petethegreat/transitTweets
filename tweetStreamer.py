@@ -17,15 +17,22 @@ FOLLOW = [
     ]
 
 # a big box containing the torontoish area
-LOCATIONBOX = [
-    -79.63,
-    43.61,
-    -79.297,
-    43.76
-    ]
+# LOCATIONBOX = [
+#     -79.63,
+#     43.61,
+#     -79.297,
+#     43.76
+#     ]
 
+# Wellington
+LOCATIONBOX = [
+    174.75,
+    -41.356,
+    174.95,
+    -41.2
+    ]
 # terms to track
-TRACK = ['ttc,ridetherocket']
+TRACK = ['metlink']
 #############################################################
 
 def GetCredentials(filename='myCredentials.txt'):
@@ -110,7 +117,9 @@ def main():
     stream = tweepy.Stream(auth=tweeper.auth, listener=theStreamListener)
 
     print('streaming')
-    stream.filter(locations=LOCATIONBOX, follow=ids, track=TRACK, async=True)
+    # stream.filter(locations=LOCATIONBOX, follow=ids, track=TRACK, async=True)
+    stream.filter(locations=LOCATIONBOX, async=True)
+
 
 
     # stream until users enters [qQ].*
