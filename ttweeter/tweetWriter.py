@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ''' Stream twitter data related to toronto transit.
 Take data from twitter and create messages which are published to kafka'''
 
@@ -233,7 +233,7 @@ def writeTweets(credFile, DBfile, logfile):
     # stream until users enters [qQ].*
     q = ''
     while not re.match(r'^[qQ]', q):
-        q = raw_input('enter "q" to exit > ')
+        q = input('enter "q" to exit > ')
         # print('received input: {q}'.format(q=q))
         stream.disconnect()
         theStreamListener.dbcon.close()
