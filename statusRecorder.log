@@ -1,0 +1,17 @@
+[31mWriting Statuses to DB[0m
+writeStatuses - recording
+Query: INSERT INTO rawTweets (tweet_id_str, author, author_id_str, status, geo_latt, geo_long, datetime_utc)  VALUES (?,?,?,?,?,?,?)
+sleeping
+sleeping
+wrote tweet 933164997974286336 to DB
+inserted rows: 1
+sleeping
+wrote tweet 933165009647042560 to DB
+inserted rows: 1
+wrote tweet 933165016039137281 to DB
+inserted rows: 1
+wrote tweet 933165025744658432 to DB
+inserted rows: 1
+sleeping
+sleeping
+writeStatuses - done writing tweets to DB

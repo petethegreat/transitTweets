@@ -1,2 +1,2 @@
-from .tweetWriter import writeTweets
+from .tweetWriter import getTweets
 

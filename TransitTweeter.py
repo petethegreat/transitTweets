@@ -35,7 +35,7 @@ if __name__ == '__main__':
     try:
         with codecs.open(args.writerLog,'w',encoding='utf8') as writerLog:
             print('opening {wl} for tweetWriter logging\n'.format(wl=args.writerLog))
-            ttweeter.writeTweets(credFile,DBfile,writerLog)
+            ttweeter.getTweets(credFile,DBfile,writerLog)
     except IOError: 
         print('Error: could not open {wf} for writing\n')
         sys.exit()
