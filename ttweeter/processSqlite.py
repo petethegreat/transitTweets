@@ -23,11 +23,11 @@ class tweetProcessor(object):
         self.df = pd.read_sql('SELECT * from rawTweets;',conn)
         print(self.df.head())
 
-        first, check that status contains ttc
+        # first, check that status contains ttc
 
-        from these, get lat and lon, and compute age, store this in a df or dict or something
+        # from these, get lat and lon, and compute age, store this in a df or dict or something
 
-        get list of routes, look for names or for route numbers XX or 5XX
+        # get list of routes, look for names or for route numbers XX or 5XX
 
         
 
