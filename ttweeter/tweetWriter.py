@@ -65,6 +65,7 @@ class myStreamer(tweepy.StreamListener):
         self._statusList = None
         self.record = None
         self.writeInterval = 4.0
+        self.ttcRegex = re.compile(r'[tT]{2}[cC]')
     #########################################################
     # Properties
 
@@ -181,7 +182,14 @@ class myStreamer(tweepy.StreamListener):
         # this could hammer the disk.
         # Might be better to store tweets in a list
         # write the list if it exceeds X tweets or Y seconds since last write
-        tweetinfo = (tweet_id_str, author_name, author_id_str, status.text, lat, lon, datetime_utc)
+
+        #
+        # get full text
+
+        fullText = status.text
+        if status.truncated:
+            fullText = status.extended_tweet[u'full_text']
+        tweetinfo = (tweet_id_str, author_name, author_id_str, fullText, lat, lon, datetime_utc)
         self.Queue.put(tweetinfo)
         # print('put a tweet')
 
@@ -202,7 +210,10 @@ class myStreamer(tweepy.StreamListener):
         if self.printmessage:
             print('\n{aname:20s} :'.format(
                 aname=author_name))
-            print(status.text)
+            print(fullText)
+            relevant = self.ttcRegex.search(fullText)
+            if relevant:
+                print('\x1b[32mRELEVANT\x1b[0m\n')
             # coordinates.coordinates are long,lat
             # geo.coordinates are lat, long
 
@@ -317,7 +328,7 @@ def getTweets(credFile, DBfile, logfile):
     # theStreamListener.dbcon = conn
 
     # start streaming
-    stream = tweepy.Stream(auth=tweeper.auth, listener=theStreamListener)
+    stream = tweepy.Stream(auth=tweeper.auth, listener=theStreamListener,tweet_mode='extended')
 
     # print('streaming')
     # Async, this is done in a new thread
