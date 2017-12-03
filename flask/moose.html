@@ -23,16 +23,7 @@
 </head>
 
 <body>
-    <script src="http://d3js.org/d3.v4.min.js"></script>
 
-   <!--  <script>
-        function getData(url)
-        {
-            d3.json(url)
-
-        }
-
-    </script> -->
 
 
 
@@ -44,7 +35,76 @@
         <p>
             The example <a href='http://bl.ocks.org/d3noob/6bd13f974d6516f3e491'>here</a> is useful
         </p>
-    <div>
+    </div>
+    <div id='testContainer' style='background-color: #000000;'>
+
+    </div>
+
+    <script src="http://d3js.org/d3.v4.min.js"></script>
+
+    <script>
+
+        // data 
+        var sampleJSON = [
+          {
+            "datetime_utc": "2017-12-02 19:25:43.385302", 
+            "geo_latt": 43.663882691173065, 
+            "geo_long": -79.35721220008752, 
+            "id": 1
+          }, 
+          {
+            "datetime_utc": "2017-12-02 19:26:04.390297", 
+            "geo_latt": 43.664556979213735, 
+            "geo_long": -79.40225059479273, 
+            "id": 2
+          }, 
+          {
+            "datetime_utc": "2017-12-02 19:26:25.395848", 
+            "geo_latt": 43.66433493889307, 
+            "geo_long": -79.39336584153828, 
+            "id": 3
+          }, 
+          {
+            "datetime_utc": "2017-12-02 19:26:46.516506", 
+            "geo_latt": 43.65999706808017, 
+            "geo_long": -79.39296230319867, 
+            "id": 4
+          }
+        ];
+
+        // define height and width
+        var width = 600;
+        var height = 600;
+
+        // define scale ranges (domains based off data)
+        var x = d3.scaleLinear().range([0, width]);
+        var y = d3.scaleLinear().range([height, 0]);
+
+        // set domain - would like to add a buffer here, say extent*1.05
+        x.domain(d3.extent(sampleJSON,function(d){return d.geo_long}));
+        y.domain(d3.extent(sampleJSON,function(d){return d.geo_latt}));
+
+        // could also create a time - colour scale, and set marker fill colour based on age
+
+        // create an svg container for stuff
+        var svg = d3.select('#testContainer').append("svg:svg").attr("width",width).attr("height",height)
+            .attr('style','background-color: #ffffff;');
+
+        // add some markers based on data
+        svg.selectAll('circle').data(sampleJSON).enter().append('circle')
+            .attr("cx",function(d){return x(d.geo_long)})
+            .attr("cy",function(d){return y(d.geo_latt)})
+            .attr("r",5)
+            .attr('fill','red');
+
+        // var xAxis = d3.axis
+        // deal with axes, svg g element
+        // how does d3 do axes? read about this.
+
+
+
+    </script>
+
 </body>
 
 
