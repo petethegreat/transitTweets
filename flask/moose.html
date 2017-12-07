@@ -41,36 +41,34 @@
     </div>
 
     <script src="http://d3js.org/d3.v4.min.js"></script>
+    <script src="./jquery-3.2.1.min.js"></script>
+    <!-- <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script> -->
 
     <script>
 
-        // data 
-        var sampleJSON = [
-          {
-            "datetime_utc": "2017-12-02 19:25:43.385302", 
-            "geo_latt": 43.663882691173065, 
-            "geo_long": -79.35721220008752, 
-            "id": 1
-          }, 
-          {
-            "datetime_utc": "2017-12-02 19:26:04.390297", 
-            "geo_latt": 43.664556979213735, 
-            "geo_long": -79.40225059479273, 
-            "id": 2
-          }, 
-          {
-            "datetime_utc": "2017-12-02 19:26:25.395848", 
-            "geo_latt": 43.66433493889307, 
-            "geo_long": -79.39336584153828, 
-            "id": 3
-          }, 
-          {
-            "datetime_utc": "2017-12-02 19:26:46.516506", 
-            "geo_latt": 43.65999706808017, 
-            "geo_long": -79.39296230319867, 
-            "id": 4
-          }
-        ];
+        // This works, but it's bad
+        // clean things up.
+        // Want to be able to fetch data and update things periodically
+        // reorganise things
+        // Error Handling?
+        
+        sampleJSON = {
+                "datetime_utc": "2017-12-02 19:25:43.385302", 
+                "geo_latt": 43.663882691173065, 
+                "geo_long": -79.35721220008752, 
+                "id": 1
+            }
+
+
+        console.log('doin stuff')
+        $.ajax(
+        {
+          dataType: "jsonp",
+          url: 'http://127.0.0.1:5000/geoData',
+          success:getDataFinish
+        });
+        // this is asynchronous
+
 
         // define height and width
         var margin = {
@@ -79,6 +77,7 @@
             bottom:25,
             right:10
         }
+
         var totalWidth = 600;
         var totalHeight = 600;
         var width = totalWidth - margin.left - margin.right;
@@ -87,19 +86,9 @@
         // define scale ranges (domains based off data)
         var x = d3.scaleLinear().range([0,width]);
         var y = d3.scaleLinear().range([height,0]);
-        
-        // var latlongbuffer = 0.001
-        // set domain - would like to add a buffer here, say extent*1.05
-        // x.domain([d3.min(sampleJSON,function(d){return d.geo_long}) -latlongbuffer, d3.max(sampleJSON, function(d) {return d.geo_long}) +latlongbuffer]);
 
-        // y.domain([d3.min(sampleJSON,function(d){return d.geo_latt}) -latlongbuffer, d3.max(sampleJSON, function(d) {return d.geo_latt}) +latlongbuffer]);
-
-        x.domain(d3.extent(sampleJSON,function(d){return d.geo_long}));
-        y.domain(d3.extent(sampleJSON,function(d){return d.geo_latt}));
-
-        
-
-        // could also create a time - colour scale, and set marker fill colour based on age
+        var xAxis = d3.axisBottom().ticks(5)
+        var yAxis = d3.axisLeft().ticks(5)
 
         // create an svg container for stuff
         var svg = d3.select('#testContainer')
@@ -110,26 +99,39 @@
             .append('g')
                 .attr('transform','translate('+margin.left +',' + margin.top + ')');
 
-        // add some markers based on data
-        svg.selectAll('circle').data(sampleJSON).enter().append('circle')
-            .attr("cx",function(d){return x(d.geo_long)})
-            .attr("cy",function(d){return y(d.geo_latt)})
-            .attr("r",5)
-            .attr('fill','red');
+        function getDataFinish(data,code, somethingelse)
+        {
+            sampleJSON = data
+            console.log('getting json data: '+code)
 
-        var xAxis = d3.axisBottom().scale(x).ticks(5)
-        var yAxis = d3.axisLeft().scale(y).ticks(5)
+            x.domain(d3.extent(sampleJSON,function(d){return d.geo_long}));
+            y.domain(d3.extent(sampleJSON,function(d){return d.geo_latt}));
 
-         // Add the X Axis
-        svg.append("g")
-            .attr("class", "x axis")
-            .attr("transform", "translate(0," + height + ")")
-            .call(xAxis);
+            // could also create a time - colour scale, and set marker fill colour based on age
+            
+            // add some markers based on data
+            svg.selectAll('circle').data(sampleJSON).enter().append('circle')
+                .attr("cx",function(d){return x(d.geo_long)})
+                .attr("cy",function(d){return y(d.geo_latt)})
+                .attr("r",5)
+                .attr('fill','red');
 
-        // Add the Y Axis
-        svg.append("g")
-            .attr("class", "y axis")
-            .call(yAxis);
+            xAxis.scale(x)
+            yAxis.scale(y)
+
+
+
+             // Add the X Axis
+            svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + height + ")")
+                .call(xAxis);
+
+            // Add the Y Axis
+            svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis);
+        }
 
     </script>
 

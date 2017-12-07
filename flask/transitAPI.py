@@ -9,7 +9,7 @@ fetch results from db tables
 # on request, pull rows from geoData table, send JSON response
 
 from datetime import datetime, timedelta
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request, Response, json
 from flask_restful import Resource, Api
 import sqlite3
 
@@ -46,9 +46,27 @@ class geoData(Resource):
     def get(self):
         ''' on get request '''
         updateGeoData()
-        return jsonify(geoDataCache)
+        data = json.dumps(geoDataCache)
+        callback = request.args.get('callback',False)
+        mtype = 'application/json'
+        resp = data
+        if callback:
+            # resp = u'{cb}({json})'.format(cb=str(callback),json=data.data)
+            resp = str(callback) + '(' + data + ')'
+            mtype = 'application/javascript'
+            
+            # return data
+        return  Response(resp,mimetype=mtype)
+
+
+
+
+        # if request contains a callback, wrap the json in the callback function
+        # else just return the json
+        
     # move updateGeoData function, and cached data into this class.
 
+    # move updateGeoData function, and cached data into this class.
 
 
 api.add_resource(geoData, '/geoData')
