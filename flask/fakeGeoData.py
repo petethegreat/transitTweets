@@ -14,7 +14,7 @@ import random
 class dataFaker(object):
     def __init__(self,dbFile):
         self.dbFile = dbFile
-        self.updateInterval = 20 
+        self.updateInterval = 10 
         self.lats = [43.656839,43.665152]
         self.lons = [-79.411510,-79.356219]
         self.cur = None
