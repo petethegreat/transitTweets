@@ -8,6 +8,9 @@ fetch results from db tables
 # Adding data to fake sqlite db. 
 # on request, pull rows from geoData table, send JSON response
 
+from geojson import Feature, Point, FeatureCollection
+import geojson
+
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, request, Response, json
 from flask_restful import Resource, Api
@@ -20,16 +23,23 @@ api = Api(app)
 ## Move this stuff, get rid of globals
 ## put all this into the geoData object
 ## define an init
-geoDataCache = []
+geoDataCache = None
 interval = 5
 
+
 timelast = datetime.utcnow()
+
 dbfile = 'fake.sqlite'
+
+
 
 def updateGeoData():
     ''' update the cached data, if needed '''
-    global geoDataCache, timelast
-    if (not geoDataCache) or ((datetime.utcnow() - timelast).seconds > interval):
+    global geoDataCache, timelast, geoJsonCache
+    if (
+            (not geoDataCache) or
+            ((datetime.utcnow() - timelast).seconds > interval)
+        ):
         timelast = datetime.utcnow()
         conn = sqlite3.connect(dbfile)
         cur = conn.cursor()
@@ -39,6 +49,7 @@ def updateGeoData():
         # geoDataCache = list(cur.fetchall())
         conn.close()
         print('updating cached geoData')
+
 
 
 class geoData(Resource):
@@ -61,6 +72,56 @@ class geoData(Resource):
 
 
 
+class geojsonData(Resource):
+    ''' return data in a geoJson format'''
+    def __init__(self):
+        self.timelast = datetime.utcnow()
+        self.interval = 5.0
+        self.geoJsonCache = None
+        self.dbfile = 'fake.sqlite'
+
+    def updateGeoJsonCache(self):
+        ''' update cached geoJson data '''
+        if (
+                (not self.geoJsonCache) or
+                ((datetime.utcnow() - self.timelast).seconds > self.interval)
+        ):
+            conn = sqlite3.connect(self.dbfile)
+            cur = conn.cursor()
+            cur.execute('select * from geoData;')
+            colnames = [col[0] for col in cur.description ]
+            # create a featurecollection, one (point) feature from each row
+            # additional info is included in properties metadata
+            self.geoJsonCache = FeatureCollection([
+                Feature(
+                    geometry=Point((row[2], row[1])),
+                    properties={
+                        'id':row[0],
+                        'datetime_utc':row[3],
+                        'tweet_id_str':row[4]}
+                    )
+                for row in cur])
+            # for row in cur:
+            #     print('lat: {lat}, lon: {lon}'.format(lat=row[1],lon=row[2]))
+            #     print(Point((row[1],row[2])))
+            conn.close()
+            print('updating cached geoData')
+
+    def get(self):
+        self.updateGeoJsonCache()
+        data = geojson.dumps(self.geoJsonCache)
+        callback = request.args.get('callback',False)
+        mtype = 'application/json'
+        resp = data
+        if callback:
+            # resp = u'{cb}({json})'.format(cb=str(callback),json=data.data)
+            resp = str(callback) + '(' + data + ')'
+            mtype = 'application/javascript'
+            
+            # return data
+        return  Response(resp,mimetype=mtype)
+
+
         # if request contains a callback, wrap the json in the callback function
         # else just return the json
         
@@ -69,7 +130,8 @@ class geoData(Resource):
     # move updateGeoData function, and cached data into this class.
 
 
-api.add_resource(geoData, '/geoData')
+# api.add_resource(geoData, '/geoData')
+api.add_resource(geojsonData,'/geojsonData')
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -11,10 +11,11 @@ from datetime import datetime, timedelta
 import sqlite3
 import random
 
+tweet_id_str = '939887719920160768'
 class dataFaker(object):
     def __init__(self,dbFile):
         self.dbFile = dbFile
-        self.updateInterval = 10 
+        self.updateInterval = 7
         self.lats = [43.656839,43.665152]
         self.lons = [-79.411510,-79.356219]
         self.cur = None
@@ -30,7 +31,8 @@ class dataFaker(object):
                 'id INTEGER PRIMARY KEY, '
                 'geo_latt REAL, '
                 'geo_long REAL, '
-                'datetime_utc TEXT'
+                'datetime_utc TEXT,'
+                'tweet_id_str TEXT'
                 ');'
                 )
     def update(self):
@@ -39,7 +41,7 @@ class dataFaker(object):
         lon = random.uniform(self.lons[0],self.lons[1])
         timenow = datetime.utcnow()
 
-        self.cur.execute('INSERT INTO geoData(geo_latt,geo_long,datetime_utc) VALUES(?,?,?);',(lat,lon, timenow))
+        self.cur.execute('INSERT INTO geoData(geo_latt,geo_long,datetime_utc,tweet_id_str) VALUES(?,?,?,?);',(lat,lon, timenow,tweet_id_str))
         self.conn.commit()
         # cur.commit()
         print('added point ({lat},{lon}), {tn}'.format(lat=lat,lon=lon,tn=timenow))
