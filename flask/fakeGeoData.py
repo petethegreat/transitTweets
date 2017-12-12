@@ -39,7 +39,7 @@ class dataFaker(object):
         ''' insert some random (Toronto) lat/lon values into table '''
         lat = random.uniform(self.lats[0],self.lats[1])
         lon = random.uniform(self.lons[0],self.lons[1])
-        timenow = datetime.utcnow()
+        timenow = datetime.utcnow() + timedelta(hours=-random.randint(0,24))
 
         self.cur.execute('INSERT INTO geoData(geo_latt,geo_long,datetime_utc,tweet_id_str) VALUES(?,?,?,?);',(lat,lon, timenow,tweet_id_str))
         self.conn.commit()

@@ -88,8 +88,10 @@ class geojsonData(Resource):
         ):
             conn = sqlite3.connect(self.dbfile)
             cur = conn.cursor()
-            cur.execute('select * from geoData;')
-            colnames = [col[0] for col in cur.description ]
+            cur.execute(
+                "select * from geoData where "
+                "datetime(datetime_utc,'utc') > datetime('now','utc','-1 day');")
+            colnames = [col[0] for col in cur.description]
             # create a featurecollection, one (point) feature from each row
             # additional info is included in properties metadata
             self.geoJsonCache = FeatureCollection([
