@@ -10,6 +10,7 @@ import ttweeter
 import sys
 import codecs
 
+# need to modify these so that they point to a docker volume
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
@@ -35,7 +36,7 @@ if __name__ == '__main__':
     try:
         with codecs.open(args.writerLog,'w',encoding='utf8') as writerLog:
             print('opening {wl} for tweetWriter logging\n'.format(wl=args.writerLog))
-            ttweeter.getTweets(credFile,DBfile,writerLog)
+            ttweeter.sgetTweets(credFile,DBfile,writerLog)
     except IOError: 
         print('Error: could not open {wf} for writing\n')
         sys.exit()
