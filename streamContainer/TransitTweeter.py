@@ -30,15 +30,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
     credFile = args.credFile
     DBfile = args.sqlitedb
+    logfilename=args.writerLog
     # print('reading credentials from {cf}'.format(cf=credFile))
     # print('writing tweet data to {dbf}'.format(dbf=DBfile))
 
     try:
-        with codecs.open(args.writerLog,'w',encoding='utf8') as writerLog:
-            print('opening {wl} for tweetWriter logging\n'.format(wl=args.writerLog))
+        with codecs.open(logfilename,'w',encoding='utf8') as writerLog:
+            print('opening {wl} for tweetWriter logging\n'.format(wl=logfilename))
             ttweeter.sgetTweets(credFile,DBfile,writerLog)
     except IOError: 
-        print('Error: could not open {wf} for writing\n')
+        print('Error: could not open {wf} for writing\n'.format(wf=logfilename))
         sys.exit()
     print('done writing tweets, exiting')
 

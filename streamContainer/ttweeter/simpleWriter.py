@@ -3,15 +3,13 @@
 Take data from twitter and create messages which are published to kafka'''
 
 from __future__ import print_function
-import signal
 import sys
 import re
 import datetime
 import tweepy
 import sqlite3
-from collections import deque
 import time
-from multiprocessing import Process, Queue, Value
+
 # handle to logfile
 LOGFILE = None
 
@@ -58,6 +56,7 @@ class myStreamer(tweepy.StreamListener):
     #########################################################
 
     def __init__(self, dbFile,printmessage=True):
+        ''' initialise object'''
         super(myStreamer, self).__init__()
         self.printmessage = printmessage
         self._dbcon = None
@@ -70,18 +69,18 @@ class myStreamer(tweepy.StreamListener):
     #########################################################
     # Properties
 
-    ## DB connection
-    # @property
-    # def dbcon(self):
-    #     ''' connection to sqlite database for raw tweet data'''
-    #     return self._dbcon
-    # @dbcon.setter
-    # def dbcon(self, conn):
-    #     self._dbcon = conn
-    # @dbcon.deleter
-    # def dbcon(self):
-    #     del self._dbcon
-    
+    # DB connection
+    @property
+    def dbcon(self):
+        ''' connection to sqlite database for raw tweet data'''
+        return self._dbcon
+    @dbcon.setter
+    def dbcon(self, conn):
+        self._dbcon = conn
+    @dbcon.deleter
+    def dbcon(self):
+        del self._dbcon
+
     ## DB filename
     @property
     def dbfile(self):
@@ -89,27 +88,17 @@ class myStreamer(tweepy.StreamListener):
         return self._dbfile
 
     @dbfile.setter
-    def dbfile(self,file):
+    def dbfile(self, file):
         self._dbfile = file
 
     @dbfile.deleter
     def dbfile(self):
         del self._dbfile
-
-    ## StatusLise
-    @property
-    def statusList(self):
-        ''' list of status data to be written to db '''
-        return self._statusList
-    @statusList.setter
-    def statusList(self,slist):
-        self._statusList = slist
-    @statusList.deleter
-    def statusList(self):
-        del self._statusList
     #########################################################
+
     def initialiseConnection(self):
-        self._dbcon = sqlite3.connect(self._dbfile)
+        ''' set up a db connection, store an insert query'''
+        self.dbcon = sqlite3.connect(self._dbfile)
         self._queryStr = 'INSERT INTO rawTweets (' \
                     'tweet_id_str, ' \
                     'author, ' \
@@ -119,6 +108,13 @@ class myStreamer(tweepy.StreamListener):
                     'geo_long, ' \
                     'datetime_utc) ' \
                     ' VALUES (?,?,?,?,?,?,?)'
+    #########################################################
+
+    def closeConnection(self):
+        ''' close the database connection'''
+        self.dbcon.commit()
+        self.dbcon.close()
+    #########################################################
 
     def on_status(self, status):
         ''' carried out when a status is recieved through stream '''
@@ -145,20 +141,31 @@ class myStreamer(tweepy.StreamListener):
             lon = status.coordinates[u'coordinates'][0]
             lat = status.coordinates[u'coordinates'][1]
 
+        text = status.text
+
+        if hasattr(status,'extended_tweet'):
+            text = status.extended_tweet['full_text']
+
+
+
         # write to db
         # this could hammer the disk.
         # Might be better to store tweets in a list
         # write the list if it exceeds X tweets or Y seconds since last write
-        tweetinfo = (tweet_id_str, author_name, author_id_str, status.text, lat, lon, datetime_utc)
+        tweetinfo = (tweet_id_str, author_name, author_id_str, text, lat, lon, datetime_utc)
         
-        curr = self._dbcon.cursor()
-        curr.execute(self._queryStr, tweetinfo)
-        self._dbcon.commit()
+        #quick/dumb check for relevance
+        isttc = text.find('ttc')
+        if isttc >= 0:
+            curr = self.dbcon.cursor()
+            curr.execute(self._queryStr, tweetinfo)
+            self.dbcon.commit()
+            writeLog('stored tweet {s}'.format(s=tweet_id_str))
 
         if self.printmessage:
             print('\n{aname:20s} :'.format(
                 aname=author_name))
-            print(status.text)
+            print(text)
 
     #########################################################
 
@@ -186,15 +193,6 @@ def GetCredentials(credFile):
         sys.exit()
     return cred_dict
 #############################################################
-
-# def GetUserIDs(api, names):
-#     '''Look up a list of names, get a list of user ids '''
-#     users = api.lookup_users(screen_names=names)
-#     ids = [user.id_str for user in users]
-#     return ids
-#############################################################
-
-
 
 def setupDB(dbFile, dropRaw=False):
     '''
@@ -262,7 +260,7 @@ def sgetTweets(credFile, DBfile, logfile):
 
     # # initialise the stream
     print('initialising twitter stream')
-    theStreamListener = myStreamer(DBfile)
+    theStreamListener = myStreamer(DBfile,printmessage=False)
     theStreamListener.initialiseConnection()
 
 
@@ -271,51 +269,17 @@ def sgetTweets(credFile, DBfile, logfile):
 
     # start streaming
     stream = tweepy.Stream(auth=tweeper.auth, listener=theStreamListener)
-
-
-    # print('streaming')
-    # Async, this is done in a new thread
-    # stream.filter(locations=LOCATIONBOX, follow=ids, track=TRACK, async=True)
-
-    # start writing
-    # do this in a new thread also
-    # theQueue = Queue()
-    # # self.Queue = theQueue
-    # record = Value('i',1)
-    # theStreamListener.Queue = theQueue
-    # P = Process(target=theStreamListener.writeStatusesSQlite,args=(theQueue,record))
-    # P.start()
-
-    stream.filter(locations=LOCATIONBOX, async=False)
-
-    
-    # theStreamListener.writeStatuses()
-
-
-    # stream until interrupt signal received
-    # def handler(signal, frame):
-    #     print('signal caught, exiting')
-    #     stream.disconnect()
-    #     # record.value = -1
-    #     # P.join(5)
+    try: 
+        stream.filter(locations=LOCATIONBOX, async=False)
+    # exit gracefully
+    except KeyboardInterrupt as e:
+        writeLog('exception: {e}\n'.format(e=e))
+        writeLog('closing db\n')
+        theStreamListener.closeConnection()
+        stream.disconnect()
 
 
 
-    # signal.signal(signal.SIGINT, handler)
-    # print('Press Ctrl+C to exit')
-    # signal.pause()
 
-
-    # q = ''
-    # while not re.match(r'^[qQ]', q):
-    #     q = input('enter "q" to exit > ')
-    #     # print('received input: {q}'.format(q=q))
-    #     stream.disconnect()
-    #     record.value = -1
-    #     P.join()
-
-
-
-# if __name__ == '__main__':
-#     main()
-
+    # print('closing db connection')
+    # theStreamListener.closeConnection()
