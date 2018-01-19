@@ -13,4 +13,8 @@ run: docker run -d --name twtestcontainer --mount source=test,target=/data twtes
 
 pushing: https://stackoverflow.com/questions/23935141/how-to-copy-docker-images-from-one-host-to-another-without-via-repository
 
+docker save twtest:latest | gzip > twtest.tar.gz
+docker load twtest.tar.gz
+
 docker.io on aws is old. uninstall it and install docker ce, https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/#uninstall-old-versions
+

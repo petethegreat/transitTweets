@@ -155,12 +155,13 @@ class myStreamer(tweepy.StreamListener):
         tweetinfo = (tweet_id_str, author_name, author_id_str, text, lat, lon, datetime_utc)
         
         #quick/dumb check for relevance
-        isttc = text.find('ttc')
-        if isttc >= 0:
-            curr = self.dbcon.cursor()
-            curr.execute(self._queryStr, tweetinfo)
-            self.dbcon.commit()
-            writeLog('stored tweet {s}'.format(s=tweet_id_str))
+        # isttc = text.find('ttc')
+        # if isttc >= 0:
+            
+        curr = self.dbcon.cursor()
+        curr.execute(self._queryStr, tweetinfo)
+        self.dbcon.commit()
+        writeLog('stored tweet {s}'.format(s=tweet_id_str))
 
         if self.printmessage:
             print('\n{aname:20s} :'.format(
