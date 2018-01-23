@@ -15,7 +15,7 @@ executable=$0
 startdir=$(pwd)
 
 #move to the docker directory (where this script is located)
-dockerdir=${0%/*.sh}
+dockerdir=${executable%/*.sh}
 cd $dockerdir
 # get absolute path
 dockerdir=$(pwd)
@@ -80,8 +80,52 @@ function build_streamContainer {
     cd $dockerdir
 }
 
+function build_flaskContainer
+{
+    cd $dockerdir
+    echo "building flaskContainer"
+    container_dir="flaskContainer"
+
+    # check directory exists
+    if [ ! -d ${container_dir} ]
+        then 
+            echo "Error, ${dockerdir}/${container_dir} directory does not exist"
+            cd $startdir
+            exit
+    fi
+
+    # copy flask directory 
+
+    cd $container_dir
+    pwd
+
+    flaskdir="flask"
+    flasksrc="${rootdir}/${flaskdir}"
+    if [ ! -d $flasksrc ]
+        then
+            echo "error, directory ${flasksrc} not found, exiting"
+            cd $startdir
+            exit
+    fi
+
+    # copy flask dir into container directory
+    cp -r $flasksrc .
+
+    # build container
+    echo "building..."
+    docker build -t flasktest .
+
+    # clean up
+    rm -r ${flaskdir}
+    echo done
+
+    cd $dockerdir
+
+}
+
+#build_streamContainer
+build_flaskContainer
+
 cd $startdir
 
-build_streamContainer
-# echo "current directory $(pwd)"
 

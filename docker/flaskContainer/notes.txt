@@ -1,0 +1,14 @@
+
+Our flask app is a flask app
+Want to use nginx to host our server
+nginx does static stuff, not dynamic applications.
+uwsgi is the go between, it runs our app, and handles traffic between the app and nginx
+
+
+Our container should be from nginx, and should pip install all our dependencies (flask, etc), as well as uwsgi
+
+read more about uswgi and flask. And sockets. Or something
+We might need to get a couple things running from one container. 
+
+
+

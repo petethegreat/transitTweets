@@ -1,0 +1,4 @@
+uWSGI
+flask
+flask_restful
+

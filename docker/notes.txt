@@ -18,3 +18,4 @@ docker load twtest.tar.gz
 
 docker.io on aws is old. uninstall it and install docker ce, https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/#uninstall-old-versions
 
+docker run .... -p=hostport:containerport
