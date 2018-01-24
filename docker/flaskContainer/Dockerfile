@@ -1,21 +1,9 @@
 FROM ubuntu:latest
 
-# either
-# start from an nginx image
-# install pip, build tools
-# have a start script that runs supervisor (or something) for both nginx and uwsgi (uwsgi will run our flask app)
-
-# or
 # start from ubuntu:latest and install nginx in addition to other stuff.
-# starting from nginx will not run nginx, we will need to start it in addition to uswgi
+# starting from nginx will not run nginx, we will need to start it in addition to uswgi using supervisor
 
 # https://docs.docker.com/engine/admin/multi-service_container/
-
-
-#RUN apt-get update -y && apt-get install -y python3-pip python3-dev build-essential supervisor nginx
-# just build-essential and nginx for now. This downloads a bunch. look into multi-stage builds, or a common root image, don't need all our images to install python 3.5 independantly.
-RUN apt-get update -y && apt-get install -y build-essential nginx
-
 
 # to start, just get supervisor running, doing a couple of dumb things (test scripts or something)
 # make sure logging works as expected, have logs go to /data 
@@ -26,24 +14,73 @@ RUN apt-get update -y && apt-get install -y build-essential nginx
 # then add flask and uwsgi/flask
 # will need to have nginx, uwsgi and supervisor conf files 
 
+# python stuff, and nginx
 
-## copy flask files 
+########################
+### apt-get packages ### 
+########################
+# install python framework, as well as supervisor and nginx
+
+RUN apt-get update -y && apt-get install -y python3-pip python3-dev build-essential nginx supervisor
+
+################
+### logfiles ###
+################
+# create a directory for logfiles. This will keep logs container specific
+# our supervisord config wants to put logs in this location
+
+RUN mkdir /logfiles
+
+###################
+#### Supervisor ###
+###################
+# install our config file as the default
+# this config tells supervisor to run nginx (daemon off)
+
+COPY supervisor.conf /etc/supervisor/supervisord.conf
+
+#############
+### nginx ###
+#############
+# RUN which nginx
+
+# expose the port to allow incoming traffic
+EXPOSE 80
+
+# nothing else needs to be done here as yet.
+# we can replace/install our own nginx config file once we have uwsgi sorted
+
+####################
+### Flask webapp ###
+####################
+# copy flask files 
+
 COPY flask/ flaskdir/flask
 COPY requirements.txt flaskdir/
 
 ## move to flask app working directory
 WORKDIR /flaskdir
 
-## install required python modules
-# RUN pip install -r requirements.txt
+## install required python modules 
+RUN pip3 install -r requirements.txt
 
-RUN which nginx
+#########################
+### Start supervisord ###
+#########################
+# run supervisor, which will run nginx
+# this should use the config file copied to /etc/supervisor/supervisord.conf
+# specify this explicitly (security/good practice)
+# which should run supervisor in the foreground and start nginx
 
-EXPOSE 80
+CMD supervisord -c /etc/supervisor/supervisord.conf
 
-#CMD service nginx start
+#################
+### old stuff ###
+#################
 
-CMD nginx -g "daemon off;"
+
+#CMD nginx -g "daemon off;"
+
 # run nginx in foreground
 
 # this works, so our nginx setup is good.
