@@ -39,9 +39,17 @@ WORKDIR /flaskdir
 
 RUN which nginx
 
-CMD /usr/sbin/nginx
+EXPOSE 80
 
-# dunno that this will work. nginx is a service. container is running the command then exiting
+#CMD service nginx start
+
+CMD nginx -g "daemon off;"
+# run nginx in foreground
+
+# this works, so our nginx setup is good.
+# look into multistage builds, get python and build essential on top of base ubuntu
+# this image should be nginx + flask + uswgi + supervisor
+
 
 
 
