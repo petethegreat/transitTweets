@@ -27,7 +27,7 @@ RUN apt-get update -y && apt-get install -y python3-pip python3-dev build-essent
 ### logfiles ###
 ################
 # create a directory for logfiles. This will keep logs container specific
-# our supervisord config wants to put logs in this location
+# our supervisord config redirects stdout and stderr to this location
 
 RUN mkdir /logfiles
 
@@ -47,16 +47,20 @@ COPY supervisor.conf /etc/supervisor/supervisord.conf
 # expose the port to allow incoming traffic
 EXPOSE 80
 
+# create directory to hold the socket
+RUN mkdir /nginx_uwsgi_socket
+
 # nothing else needs to be done here as yet.
 # we can replace/install our own nginx config file once we have uwsgi sorted
 
 ####################
 ### Flask webapp ###
 ####################
-# copy flask files 
+# copy flask files, and nginx_config
 
 COPY flask/ flaskdir/flask
 COPY requirements.txt flaskdir/
+COPY fc_nginx.conf flaskdir/
 
 ## move to flask app working directory
 WORKDIR /flaskdir
