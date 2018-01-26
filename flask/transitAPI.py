@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from flask import Flask, jsonify, request, Response, json
 from flask_restful import Resource, Api
 import sqlite3
+import uwsgi
 
 app = Flask(__name__)
 api = Api(app)
@@ -88,9 +89,19 @@ class geojsonData(Resource):
         ):
             conn = sqlite3.connect(self.dbfile)
             cur = conn.cursor()
+            # fake "GeoData" table used for testing
+            # cur.execute(
+            #     "select * from geoData where "
+            #     "datetime(datetime_utc,'utc') > datetime('now','utc','-1 day');")
+
+            # same info from rawTweets
+            # only select records where latt and long are not null
             cur.execute(
-                "select * from geoData where "
-                "datetime(datetime_utc,'utc') > datetime('now','utc','-1 day');")
+                "SELECT id, geo_latt, geo_long, datetime_utc, tweet_id_str FROM geoData WHERE "
+                "datetime(datetime_utc,'utc') > datetime('now','utc','-1 day') "
+                "AND geo_latt IS NOT NULL AND geo_long IS NOT NULL;")
+
+
             colnames = [col[0] for col in cur.description]
             # create a featurecollection, one (point) feature from each row
             # additional info is included in properties metadata
@@ -137,3 +148,8 @@ api.add_resource(geojsonData,'/geojsonData')
 
 if __name__ == '__main__':
     app.run(debug=True)
+else:
+    # if we're running through uwsgi, then get the dbfile from there
+    # dbfile is a placeholder set in uwsgi config (.ini)
+    if 'dbfile' in uwsgi.opts:
+        dbfile = uwsgi.opts['dbfile']
