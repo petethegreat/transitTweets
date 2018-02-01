@@ -30,9 +30,18 @@ interval = 5
 
 timelast = datetime.utcnow()
 
+# default database file
+# this is created/written to by fakeGeoData.py
 dbfile = 'fake.sqlite'
 
+# if we're running through uwsgi, get the db name from uwsgi config placeholder options
+if not __name__ == '__main__':
+    if 'dbfile' in uwsgi.opt:
+        dbfile = uwsgi.opt['dbfile'].decode('utf-8')
 
+##############################
+### Old Geo Data endpoint ####
+##############################
 
 def updateGeoData():
     ''' update the cached data, if needed '''
@@ -51,8 +60,6 @@ def updateGeoData():
         conn.close()
         print('updating cached geoData')
 
-
-
 class geoData(Resource):
     ''' class for handling geoData requests '''
     def get(self):
@@ -70,16 +77,35 @@ class geoData(Resource):
             # return data
         return  Response(resp,mimetype=mtype)
 
+############
+### Test ###
+############
 
+class test(Resource):
+    def __init__(self,**kwargs):
+        self.dbfile = None
+        if 'dbfile' in kwargs:
+            self.dbfile = kwargs['dbfile']
 
+    def get(self):
+        return {
+        'checka checka': 'microphone wrecka',
+        'dbfile': self.dbfile
+        }
+
+###################
+### geojsonData ###
+###################
 
 class geojsonData(Resource):
     ''' return data in a geoJson format'''
-    def __init__(self):
+    def __init__(self,**kwargs):
         self.timelast = datetime.utcnow()
         self.interval = 5.0
         self.geoJsonCache = None
         self.dbfile = 'fake.sqlite'
+        if 'dbfile' in kwargs:
+            self.dbfile = kwargs['dbfile']
 
     def updateGeoJsonCache(self):
         ''' update cached geoJson data '''
@@ -135,21 +161,14 @@ class geojsonData(Resource):
         return  Response(resp,mimetype=mtype)
 
 
-        # if request contains a callback, wrap the json in the callback function
-        # else just return the json
-        
-    # move updateGeoData function, and cached data into this class.
-
-    # move updateGeoData function, and cached data into this class.
-
+# setup app
+# pass the database file to our resources
+stuff = {'dbfile': dbfile}
 
 # api.add_resource(geoData, '/geoData')
-api.add_resource(geojsonData,'/geojsonData')
+api.add_resource(geojsonData,'/geojsonData',resource_class_kwargs=stuff)
+api.add_resource(test,'/',resource_class_kwargs=stuff)
 
+# if we are executing this file, then run a (test) webserver
 if __name__ == '__main__':
     app.run(debug=True)
-else:
-    # if we're running through uwsgi, then get the dbfile from there
-    # dbfile is a placeholder set in uwsgi config (.ini)
-    if 'dbfile' in uwsgi.opts:
-        dbfile = uwsgi.opts['dbfile']

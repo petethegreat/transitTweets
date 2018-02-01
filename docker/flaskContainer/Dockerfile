@@ -31,6 +31,7 @@ RUN apt-get update -y && apt-get install -y python3-pip python3-dev build-essent
 
 RUN mkdir /logfiles
 
+
 ###################
 #### Supervisor ###
 ###################
@@ -44,11 +45,24 @@ COPY supervisor.conf /etc/supervisor/supervisord.conf
 #############
 # RUN which nginx
 
+
+
+# create nginx/flask group
+RUN groupadd -g 100001 nginxflask
+
+# create the nginx user, make them a member of the above group
+RUN useradd -g nginxflask -M nginxuser
+
+
 # expose the port to allow incoming traffic
 EXPOSE 80
 
 # create directory to hold the socket
-RUN mkdir /nginx_uwsgi_socket
+# change ownership to nginxuser:nginxflask, set permissions
+RUN mkdir /nginx_uwsgi_socket && chown nginxuser:nginxflask /nginx_uwsgi_socket && chmod -R 775 /nginx_uwsgi_socket
+
+# create log directory, and set permissions 
+RUN mkdir /logfiles/nginx && chown nginxuser:nginxflask /logfiles/nginx && chmod -R 775 /logfiles/nginx
 
 # nothing else needs to be done here as yet.
 # we can replace/install our own nginx config file once we have uwsgi sorted
@@ -56,17 +70,26 @@ RUN mkdir /nginx_uwsgi_socket
 ####################
 ### Flask webapp ###
 ####################
-# copy flask files, and nginx_config
 
+# Make a flask user, assign to nginxflask group
+RUN useradd -g nginxflask -M flaskuser
+
+# copy flask files, and nginx_config
 COPY flask/ flaskdir/flask
 COPY requirements.txt flaskdir/
 COPY fc_nginx.conf flaskdir/
+COPY uwsgi.ini flaskdir/
+
+# change ownership, set permissions
+RUN chown -R flaskuser:nginxflask /flaskdir && chmod -R 775 /flaskdir 
 
 ## move to flask app working directory
 WORKDIR /flaskdir
 
 ## install required python modules 
 RUN pip3 install -r requirements.txt
+
+
 
 #########################
 ### Start supervisord ###

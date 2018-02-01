@@ -123,7 +123,7 @@ function build_flaskContainer
 
 }
 
-#build_streamContainer
+build_streamContainer
 build_flaskContainer
 
 cd $startdir
