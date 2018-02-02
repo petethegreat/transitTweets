@@ -122,8 +122,9 @@ class geojsonData(Resource):
 
             # same info from rawTweets
             # only select records where latt and long are not null
+            # fake db called table geoData
             cur.execute(
-                "SELECT id, geo_latt, geo_long, datetime_utc, tweet_id_str FROM geoData WHERE "
+                "SELECT id, geo_latt, geo_long, datetime_utc, tweet_id_str FROM rawTweets WHERE "
                 "datetime(datetime_utc,'utc') > datetime('now','utc','-1 day') "
                 "AND geo_latt IS NOT NULL AND geo_long IS NOT NULL;")
 
