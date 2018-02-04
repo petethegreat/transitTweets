@@ -21,10 +21,13 @@ WORKDIR /appDir
 
 RUN pip3 install -r requirements.txt
 
+RUN mkdir /logfiles
+
 # run the app
 
 #CMD  ls -alh
-CMD ./TransitTweeter.py --credFile /data/myCredentials.txt --sqlitedb /data/rawTweets.db --writerLog /data/writer.log
+CMD ./TransitTweeter.py --credFile /data/myCredentials.txt --sqlitedb /data/rawTweets.db --writerLog /logfiles/writer.log &> /logfiles/TransitTweeter.log
+
 
 # need to run the app with the volume mounted
 # docker run --name tweetwriterTest --mount source=test,target=/data imagename
