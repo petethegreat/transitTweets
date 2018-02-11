@@ -70,7 +70,7 @@ function build_streamContainer {
 
     # build the image
     echo "building"
-    docker build -t twtest .
+    docker build -t tweetstreamer .
 
     # clean up
     rm $tfname
@@ -83,7 +83,7 @@ function build_streamContainer {
 function build_flaskContainer
 {
     cd $dockerdir
-    echo "building flaskContainer"
+    echo "building FlaskApp"
     container_dir="flaskContainer"
 
     # check directory exists
@@ -113,7 +113,7 @@ function build_flaskContainer
 
     # build container
     echo "building..."
-    docker build -t flasktest .
+    docker build -t flaskapp .
 
     # clean up
     rm -r ${flaskdir}

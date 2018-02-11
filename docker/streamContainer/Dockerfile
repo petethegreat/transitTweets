@@ -26,7 +26,7 @@ RUN mkdir /logfiles
 # run the app
 
 #CMD  ls -alh
-CMD ./TransitTweeter.py --credFile /data/myCredentials.txt --sqlitedb /data/rawTweets.db --writerLog /logfiles/writer.log &> /logfiles/TransitTweeter.log
+CMD ./TransitTweeter.py --credFile /data/myCredentials.txt --sqlitedb /data/rawTweets.db --writerLog /logfiles/writer.log 
 
 
 # need to run the app with the volume mounted
