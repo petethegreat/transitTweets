@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from flask import Flask, jsonify, request, Response, json
 from flask_restful import Resource, Api
 import sqlite3
+import uwsgi
 
 app = Flask(__name__)
 api = Api(app)
@@ -29,9 +30,18 @@ interval = 5
 
 timelast = datetime.utcnow()
 
+# default database file
+# this is created/written to by fakeGeoData.py
 dbfile = 'fake.sqlite'
 
+# if we're running through uwsgi, get the db name from uwsgi config placeholder options
+if not __name__ == '__main__':
+    if 'dbfile' in uwsgi.opt:
+        dbfile = uwsgi.opt['dbfile'].decode('utf-8')
 
+##############################
+### Old Geo Data endpoint ####
+##############################
 
 def updateGeoData():
     ''' update the cached data, if needed '''
@@ -50,8 +60,6 @@ def updateGeoData():
         conn.close()
         print('updating cached geoData')
 
-
-
 class geoData(Resource):
     ''' class for handling geoData requests '''
     def get(self):
@@ -69,16 +77,35 @@ class geoData(Resource):
             # return data
         return  Response(resp,mimetype=mtype)
 
+############
+### Test ###
+############
 
+class test(Resource):
+    def __init__(self,**kwargs):
+        self.dbfile = None
+        if 'dbfile' in kwargs:
+            self.dbfile = kwargs['dbfile']
 
+    def get(self):
+        return {
+        'checka checka': 'microphone wrecka',
+        'dbfile': self.dbfile
+        }
+
+###################
+### geojsonData ###
+###################
 
 class geojsonData(Resource):
     ''' return data in a geoJson format'''
-    def __init__(self):
+    def __init__(self,**kwargs):
         self.timelast = datetime.utcnow()
         self.interval = 5.0
         self.geoJsonCache = None
         self.dbfile = 'fake.sqlite'
+        if 'dbfile' in kwargs:
+            self.dbfile = kwargs['dbfile']
 
     def updateGeoJsonCache(self):
         ''' update cached geoJson data '''
@@ -88,9 +115,20 @@ class geojsonData(Resource):
         ):
             conn = sqlite3.connect(self.dbfile)
             cur = conn.cursor()
+            # fake "GeoData" table used for testing
+            # cur.execute(
+            #     "select * from geoData where "
+            #     "datetime(datetime_utc,'utc') > datetime('now','utc','-1 day');")
+
+            # same info from rawTweets
+            # only select records where latt and long are not null
+            # fake db called table geoData
             cur.execute(
-                "select * from geoData where "
-                "datetime(datetime_utc,'utc') > datetime('now','utc','-1 day');")
+                "SELECT id, geo_latt, geo_long, datetime_utc, tweet_id_str FROM rawTweets WHERE "
+                "datetime(datetime_utc,'utc') > datetime('now','utc','-1 day') "
+                "AND geo_latt IS NOT NULL AND geo_long IS NOT NULL;")
+
+
             colnames = [col[0] for col in cur.description]
             # create a featurecollection, one (point) feature from each row
             # additional info is included in properties metadata
@@ -124,16 +162,14 @@ class geojsonData(Resource):
         return  Response(resp,mimetype=mtype)
 
 
-        # if request contains a callback, wrap the json in the callback function
-        # else just return the json
-        
-    # move updateGeoData function, and cached data into this class.
-
-    # move updateGeoData function, and cached data into this class.
-
+# setup app
+# pass the database file to our resources
+stuff = {'dbfile': dbfile}
 
 # api.add_resource(geoData, '/geoData')
-api.add_resource(geojsonData,'/geojsonData')
+api.add_resource(geojsonData,'/geojsonData',resource_class_kwargs=stuff)
+api.add_resource(test,'/',resource_class_kwargs=stuff)
 
+# if we are executing this file, then run a (test) webserver
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,0 +1,21 @@
+docker stuff
+
+want a volume to hold sqlite3 db and logs, etc
+
+docker volume create volume-name
+
+prettymuch need a container to access the volume. change to the directory that contains the desired files and run
+
+docker run --rm -v `pwd`:/tmp/src -v volume-name:/data ubuntu cp -r /tmp/src /data
+
+build: docker build -t twtest .
+run: docker run -d --name twtestcontainer --mount source=test,target=/data twtest:latest
+
+pushing: https://stackoverflow.com/questions/23935141/how-to-copy-docker-images-from-one-host-to-another-without-via-repository
+
+docker save twtest:latest | gzip > twtest.tar.gz
+docker load twtest.tar.gz
+
+docker.io on aws is old. uninstall it and install docker ce, https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/#uninstall-old-versions
+
+docker run .... -p=hostport:containerport
