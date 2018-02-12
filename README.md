@@ -21,6 +21,9 @@ The aim of this project is to display information related to toronto transit har
 
 Right now, there are a few different pieces that all seem to work. Focus now is to get all the pieces working together nicely under Docker, and then install it on AWS. Have created a docker branch to do this. 
 
+## SSL/https
+Need our server to repond to https requests (github pages serve site over https, which requires that our javascript gets over https) Add ssl on to nginx config. Sort this
+
 
 ## Kafka
 Ran into some out-of-memory errors when trying to work with Kafka on the raspberry pi. Will come back to this. At present want to get something running. Will use an sqlite database to store tweets and processed data for now. This isn't scalable and won't teach me anything about kafka, but should be sufficient to get a map that displays twitter data in realtime(ish). Javascript/d3.js/Docker are all fairly new to me, and I'd like to get something up and running in the near future. Will aim to get the map up and running, with the html hosted on github pages and the tweepy/python/flask backend on AWS. Once this is working, I'll tackle kafka, and do some more advanced processing/machine learning in spark.
@@ -33,4 +36,6 @@ expose lets docker know that a container wants to listen to a port
 publish (or publish-all) - for every exposed port, docker creates a mapping between the containers port and the hosts. If a container exposes port 80, then when it is run with a publish option docker creates a mapping between the container's input port 80, and an input port on the host. The host port is assigned at runtime, and is generally somewhere in the range 32768 - 61000.
 
 ### Volumes
-are how containers should access storage.
+are how containers should access storage. sorted.
+
+
