@@ -82,3 +82,6 @@ docker run -it --rm \
       --webroot --webroot-path=/data/letsencrypt \
       -d www.petesstuff.ml -d petesstuff.ml
 
+This gets the certificate files. These should be specified in the https/ listen 443 block in nginx config
+certificates expire every 90 days or so, so need to set up a cron job to renew things
+
