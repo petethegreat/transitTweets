@@ -27,8 +27,8 @@ var msMin = 1000*60;
 var msHour = msMin*60;
 var msDay = msHour*24;
 
-
-var updateInterval = 5000;
+// 20s
+var updateInterval = 20000;
 var timenow = new Date()
 
 
