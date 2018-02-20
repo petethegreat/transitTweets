@@ -1,0 +1,87 @@
+docker stuff
+
+want a volume to hold sqlite3 db and logs, etc
+
+docker volume create volume-name
+
+prettymuch need a container to access the volume. change to the directory that contains the desired files and run
+
+docker run --rm -v `pwd`:/tmp/src -v volume-name:/data ubuntu cp -r /tmp/src /data
+
+build: docker build -t twtest .
+run: docker run -d --name twtestcontainer --mount source=test,target=/data twtest:latest
+
+pushing: https://stackoverflow.com/questions/23935141/how-to-copy-docker-images-from-one-host-to-another-without-via-repository
+
+docker save twtest:latest | gzip > twtest.tar.gz
+docker load twtest.tar.gz
+
+docker.io on aws is old. uninstall it and install docker ce, https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/#uninstall-old-versions
+
+docker run .... -p=hostport:containerport
+
+
+############################
+######### volumes ##########
+############################
+
+volumes
+on aws, have the following
+
+transit_data - /data
+le_certs - /etc/letsencrypt
+
+
+############################
+###### tweetstreamer #######
+############################
+
+on aws
+docker run --name streamcont -d -v transit_data:/data tweetstreamer
+
+############################
+######### flaskapp #########
+############################
+
+Our flask app is a flask app
+Want to use nginx to host our server
+nginx does static stuff, not dynamic applications.
+uwsgi is the go between, it runs our app, and handles traffic between the app and nginx
+
+
+Our container should be from nginx, and should pip install all our dependencies (flask, etc), as well as uwsgi
+
+
+volumes
+on aws, have the following
+
+transit_data - /data
+le_certs - /etc/letsencrypt
+
+# run things
+
+docker run -d --name flaskcont -v transit_data:/data -v le_certs:/etc/letsencrypt -p=443:443 -p=80:80 flaskapp
+
+
+change aws port settings, now 22, 80, and 443 are open
+
+
+
+#########################
+###### letsencrypt ######
+#########################
+
+uses acme protocol to verify that we own the domain for the site we're trying to obtain a certificate for
+https://miki725.github.io/docker/crypto/2017/01/29/docker+nginx+letsencrypt.html
+
+docker run -it --rm \
+      -v le_certs:/etc/letsencrypt \
+      -v transit_data:/data \
+      deliverous/certbot \
+      certonly \
+      --webroot --webroot-path=/data/letsencrypt \
+      -d www.petesstuff.ml -d petesstuff.ml
+
+This gets the certificate files. These should be specified in the https/ listen 443 block in nginx config
+certificates expire every 90 days or so, so need to set up a cron job to renew things
+
