@@ -8,7 +8,7 @@ var osmAttrib='Map data © <a href="http://openstreetmap.org">OpenStreetMap</a>'
 var stamenTileUrl = 'https://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.png'
 var stamenTileAttrib = 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
-var geoDataSourceURL = 'http://ec2-34-217-31-78.us-west-2.compute.amazonaws.com:9898/geojsonData'
+var geoDataSourceURL = 'https://www.petesstuff.ml/geojsonData'
 L.tileLayer(stamenTileUrl,{
     attribution: stamenTileAttrib,
     minZoom: 0,
@@ -27,8 +27,8 @@ var msMin = 1000*60;
 var msHour = msMin*60;
 var msDay = msHour*24;
 
-
-var updateInterval = 5000;
+// 20s
+var updateInterval = 20000;
 var timenow = new Date()
 
 
@@ -133,7 +133,7 @@ console.log('getting initial marker data')
 $.ajax(
     {
       dataType: "jsonp",
-      url: 'http://127.0.0.1:5000/geojsonData',
+      url: geoDataSourceURL,
       success:getdataFinish
     });
 

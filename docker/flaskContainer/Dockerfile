@@ -54,7 +54,7 @@ RUN groupadd -g 100001 nginxflask
 RUN useradd -g nginxflask -M nginxuser
 
 
-# expose the port to allow incoming traffic
+# expose the port to allow incoming traffic, 80 for http and 443 for https
 EXPOSE 80
 
 # create directory to hold the socket

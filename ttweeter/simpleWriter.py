@@ -21,12 +21,20 @@ FOLLOW = [
     ]
 
 # # a big box containing the torontoish area
+
 LOCATIONBOX = [
-    -79.63,
-    43.61,
-    -79.297,
-    43.76
+    -79.544,
+    43.567,
+    -79.197,
+    43.898
     ]
+
+# LOCATIONBOX = [
+#     -79.63,
+#     43.61,
+#     -79.297,
+#     43.76
+#     ]
     
 # Wellington
 # LOCATIONBOX = [
@@ -170,9 +178,12 @@ class myStreamer(tweepy.StreamListener):
 
     #########################################################
 
-    def on_error(self, status):
+    def on_error(self, status_code):
         ''' print status on error'''
-        print(status)
+        writeLog('Error retrieving status, disconnecting {s}'.format(s=status_code))
+        # returning false will disconnect (and exit)
+        return False
+
     def disconnect(self):
         self._dbcon.disconnect()
         super(myStreamer, self).disconnect()
