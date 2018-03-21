@@ -148,6 +148,16 @@ class myStreamer(tweepy.StreamListener):
             # print(status.coordinates[u'coordinates'])
             lon = status.coordinates[u'coordinates'][0]
             lat = status.coordinates[u'coordinates'][1]
+        else:
+            return
+        # check that tweet is actually within our location box
+        # (getting some stuff from new york state)
+
+        if lat < LOCATIONBOX[1] or lon > LOCATIONBOX[2]:
+            return
+        
+
+
 
         text = status.text
 
@@ -181,6 +191,9 @@ class myStreamer(tweepy.StreamListener):
     def on_error(self, status_code):
         ''' print status on error'''
         writeLog('Error retrieving status, disconnecting {s}'.format(s=status_code))
+        self.dbcon.commit()
+        self.dbcon.close()
+
         # returning false will disconnect (and exit)
         return False
 
@@ -281,14 +294,16 @@ def sgetTweets(credFile, DBfile, logfile):
 
     # start streaming
     stream = tweepy.Stream(auth=tweeper.auth, listener=theStreamListener)
-    try: 
-        stream.filter(locations=LOCATIONBOX, async=False)
-    # exit gracefully
-    except KeyboardInterrupt as e:
-        writeLog('exception: {e}\n'.format(e=e))
-        writeLog('closing db\n')
-        theStreamListener.closeConnection()
-        stream.disconnect()
+    stream.filter(locations=LOCATIONBOX, async=False)
+
+    # try: 
+    #     stream.filter(locations=LOCATIONBOX, async=False)
+    # # exit gracefully
+    # except Exception as e:
+    #     writeLog('exception: {e}\n'.format(e=e))
+    #     writeLog('closing db\n')
+    #     theStreamListener.closeConnection()
+    #     stream.disconnect()
 
 
 
