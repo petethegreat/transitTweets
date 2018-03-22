@@ -82,6 +82,46 @@ docker run -it --rm \
       --webroot --webroot-path=/data/letsencrypt \
       -d www.petesstuff.ml -d petesstuff.ml
 
+
+renew:
+docker run -t --rm \
+      -v le_certs:/etc/letsencrypt \
+      -v transit_data:/data \
+      deliverous/certbot \
+      renew \
+      --webroot --webroot-path=/data/letsencrypt 
+
+
 This gets the certificate files. These should be specified in the https/ listen 443 block in nginx config
 certificates expire every 90 days or so, so need to set up a cron job to renew things
+
+
+### Bug ####
+Our streaming program falls down periodically, every few days or so.
+
+Think this is a tweepy issue:
+
+opening writer.log for tweetWriter logging
+
+setting up DB
+authenticating
+initialising twitter stream
+Traceback (most recent call last):
+  File "./TransitTweeter.py", line 40, in <module>
+    ttweeter.sgetTweets(credFile,DBfile,writerLog)
+  File "/home/pete/Workarea/transitTweets/ttweeter/simpleWriter.py", line 297, in sgetTweets
+    stream.filter(locations=LOCATIONBOX, async=False)
+  File "/usr/local/lib/python3.5/dist-packages/tweepy/streaming.py", line 445, in filter
+    self._start(async)
+  File "/usr/local/lib/python3.5/dist-packages/tweepy/streaming.py", line 361, in _start
+    self._run()
+  File "/usr/local/lib/python3.5/dist-packages/tweepy/streaming.py", line 294, in _run
+    raise exception
+  File "/usr/local/lib/python3.5/dist-packages/tweepy/streaming.py", line 263, in _run
+    self._read_loop(resp)
+  File "/usr/local/lib/python3.5/dist-packages/tweepy/streaming.py", line 313, in _read_loop
+    line = buf.read_line().strip()
+AttributeError: 'NoneType' object has no attribute 'strip'
+
+Was using tweepy 3.2.0 to try and avoid this. Try updating to 3.6.0
 
