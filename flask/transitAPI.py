@@ -160,6 +160,68 @@ class geojsonData(Resource):
             
             # return data
         return  Response(resp,mimetype=mtype)
+#######################################################
+
+
+class TweetTimeBin(Resource):
+    ''' compute tweets per hour over the last 24 hours'''
+    def __init__(self,**kwargs):
+        self.timelast = datetime.utcnow()
+        self.interval = 1800.0
+        self.timeCache = None
+        self.dbfile = 'fake.sqlite'
+        if 'dbfile' in kwargs:
+            self.dbfile = kwargs['dbfile']
+
+    def updateTimeCache(self):
+        ''' update cached geoJson data '''
+        if (
+                (not self.timeCache) or
+                ((datetime.utcnow() - self.timelast).seconds > self.interval)
+        ):
+            conn = sqlite3.connect(self.dbfile)
+            cur = conn.cursor()
+
+            # select tweets, group by hour (utc)
+            cur.execute(
+                "SELECT count(*), strftime('%H',datetime_utc,'utc') as utc_hour "
+                "FROM rawTweets WHERE datetime(datetime_utc,'utc') > datetime('now','utc', '-1 day') "
+                "GROUP BY utc_hour;"
+                )
+
+            colnames = [col[0] for col in cur.description]
+            # create a featurecollection, one (point) feature from each row
+            # additional info is included in properties metadata
+            self.geoJsonCache = FeatureCollection([
+                Feature(
+                    geometry=Point((row[2], row[1])),
+                    properties={
+                        'id':row[0],
+                        'datetime_utc':row[3],
+                        'tweet_id_str':row[4]}
+                    )
+                for row in cur])
+            
+            self.timeCache = 
+            # for row in cur:
+            #     print('lat: {lat}, lon: {lon}'.format(lat=row[1],lon=row[2]))
+            #     print(Point((row[1],row[2])))
+            conn.close()
+            print('updating cached geoData')
+
+    def get(self):
+        self.updateGeoJsonCache()
+        data = geojson.dumps(self.geoJsonCache)
+        callback = request.args.get('callback',False)
+        mtype = 'application/json'
+        resp = data
+        if callback:
+            # resp = u'{cb}({json})'.format(cb=str(callback),json=data.data)
+            resp = str(callback) + '(' + data + ')'
+            mtype = 'application/javascript'
+            
+            # return data
+        return  Response(resp,mimetype=mtype)
 
 
 # setup app
